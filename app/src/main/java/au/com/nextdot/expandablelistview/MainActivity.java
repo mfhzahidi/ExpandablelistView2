@@ -3,6 +3,8 @@ package au.com.nextdot.expandablelistview;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.graphics.drawable.Drawable;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,12 +18,13 @@ import android.widget.Toast;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DatePickerFragment.OnSetDateText{
 
     private LinkedHashMap<String, GroupInfo> subjects = new LinkedHashMap<String, GroupInfo>();
     private ArrayList<GroupInfo> deptList = new ArrayList<GroupInfo>();
@@ -32,8 +35,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
 
     private ImageButton back,next;
-    Calendar dateSelected;
-    final Calendar myCalendar = Calendar.getInstance();
+    SimpleDateFormat simpledateformat;
+    Calendar dateSelected,curentDate;
+
+
 
 
     @Override
@@ -48,60 +53,30 @@ public class MainActivity extends AppCompatActivity {
         textView = (TextView) findViewById(R.id.textView4);
 
 
-        dateSelected = Calendar.getInstance();
-        final SimpleDateFormat simpledateformat = new SimpleDateFormat("EEE dd MMM");
-
-        String dayOfWeek = simpledateformat.format(dateSelected.getTime());
-        Log.d("date", dayOfWeek);
-        textView.setText(dayOfWeek);
-
-
-        final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
-
-            @Override
-            public void onDateSet(DatePicker view, int year, int monthOfYear,
-                                  int dayOfMonth) {
-                // TODO Auto-generated method stub
-                myCalendar.set(Calendar.YEAR, year);
-                myCalendar.set(Calendar.MONTH, monthOfYear);
-                myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                updateLabel();
-            }
-
-        };
+        dateSelected=Calendar.getInstance();
+        simpledateformat = new SimpleDateFormat("EEE dd MMM");
+        setDateText(dateSelected);
 
 
         textView.setOnClickListener(new View.OnClickListener() {
 
             @Override
-            public void onClick(View v) {
-                // TODO Auto-generated method stub
-                new DatePickerDialog(MainActivity.this, date, myCalendar
-                        .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                        myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+            public void onClick(View view) {
+                openDatePicker(view);
             }
         });
 
         back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dateSelected.add(Calendar.DATE, -1);
-                String dayOfWeek = simpledateformat.format(dateSelected.getTime());
+                decrement();
 
-
-                Log.d("date", dayOfWeek);
-                textView.setText(dayOfWeek);
             }
         });
         next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dateSelected.add(Calendar.DATE, 1);
-                String dayOfWeek = simpledateformat.format(dateSelected.getTime());
-
-
-                Log.d("date", dayOfWeek);
-                textView.setText(dayOfWeek);
+                increment();
             }
         });
 
@@ -148,14 +123,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-    private void updateLabel() {
 
-        String myFormat = "EEE dd MMM"; //In which you need put here
-        SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.US);
 
-        textView.setText(sdf.format(myCalendar.getTime()));
-
-    }
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
@@ -193,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         product= new String[]{"12:00 PM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM"};
         addProduct("Afternoon(12pm-4pm",product);
         product= new String[]{"12:00 PM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM"};
-        addProduct("Evening(4pm-8pm",product);
+        addProduct("Evening(4pm-8pm)",product);
         //addProduct("Morning(10am-12pm)", "10:15 AM");
         //addProduct("Morning(10am-12pm)", "10:30 AM");
         //addProduct("Morning(10am-12pm)", "10:45 AM");
@@ -234,6 +203,34 @@ public class MainActivity extends AppCompatActivity {
         //find the group position inside the list
         groupPosition = deptList.indexOf(headerInfo);
         return groupPosition;
+    }
+    @Override
+    public void setDateText(Calendar calendar) {
+        Date date = dateSelected.getTime();
+        String dateString = simpledateformat.format(date);
+        textView.setText(dateString);
+    }
+
+    private void increment() {
+        dateSelected.add(Calendar.DATE, 1);
+        setDateText(dateSelected);
+    }
+
+    // compare date in calender with today's date and disable it when it is today's date
+    private void decrement() {
+        Date calenderDate = dateSelected.getTime();
+        Date today = new Date();
+        //comparing calender's date with today's date
+        if(calenderDate.after(today)) {
+            dateSelected.add(Calendar.DATE, -1);
+            setDateText(dateSelected);
+        }
+    }
+
+    public void openDatePicker(View view){
+        DialogFragment newFragment = new DatePickerFragment((DatePickerFragment.OnSetDateText) this,dateSelected);
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        newFragment.show(fragmentManager, "datePicker");
     }
 
 }
